@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #Projet fin d'année ISN
 from tkinter import *
 from tkinter.font import *
@@ -5,7 +6,7 @@ import time
 from PIL import Image, ImageTk
 import random
 from threading import Thread
-import sys
+import math
 
 #résolution automatique
 ecr = Tk()
@@ -41,11 +42,13 @@ def FctBoutonQuitter(event):
 #définition du curseur *2*
 image3 = Image.open("Data/Barre_3.png")
 image3 = image3.resize((round(200*F), round(25*F)), Image.ANTIALIAS) 
-ImgCurseur = ImageTk.PhotoImage(image3)
+ImgCurseur1 = ImageTk.PhotoImage(image3)
 global Curseur
-Curseur = ZoneJeu.create_image(RésX//2,212*F,image=ImgCurseur)
-sys.exit
+Curseur = ZoneJeu.create_image(RésX//2, 800*F,image=ImgCurseur1)
+
 #Définition des variables
+global Points
+Points = 0
 global MoveCurseurDroit
 MoveCurseurDroit = False
 global MoveCurseurGauche
@@ -54,16 +57,20 @@ global x
 global y
 global lancé 
 lancé = False
+global LabGagne
+LabGagne = NONE
 global LabPerdu
-LabPerdu = int
+LabPerdu = NONE
 global Initialisation
 Initialisation = False
-global NombreDéfaite
-NombreDéfaite = 0
-global NombreVictoire
-NombreVictoire = 0
-global Nomstr 
-Nomstr = ""
+global précédent
+précédent = -1
+global ListeBrique
+ListeBrique = []
+global ScoreNumber
+ScoreNumber = 0
+global Score
+Score = ZoneJeu.create_text(RésX//2,50*F, text=ScoreNumber, font=Font(size=30), fill="white")
 
 #Fonction déplacement curseur
 def FctCurseurPressD(event):
@@ -84,40 +91,80 @@ def FctCurseurRelG(event):
     global MoveCurseurGauche
     MoveCurseurGauche = False
 
-#def MoveCurseur():
-  
+#Autres fonctions 
+def DetecterCollision(i):
+    global x
+    global y
+    if ZoneJeu.coords(i)[0]-45*F <= ZoneJeu.coords(Balle)[0] <= ZoneJeu.coords(i)[0]+45*F:
+        y = -y 
+    elif ZoneJeu.coords(i)[1]-35*F <= ZoneJeu.coords(Balle)[1] <= ZoneJeu.coords(i)[1]+35*F:
+        x = -x          
+    else:
+        x=-x
+        y=-y
+    ZoneJeu.delete(i)
+
 def CasserBlock(detruit):
     global x
     global y
+    global précédent
+    global ScoreNumber
+    global Score
     
-    i = detruit[2]
-    print(i)
-    print(ZoneJeu.(i))
-    TagBrique = ZoneJeu.gettags(i)[0]
-    if TagBrique.Levelattribute == 1:
-        if i > 4:
-            if ZoneJeu.coords(i)[0]-45*F <= ZoneJeu.coords(Balle)[0] <= ZoneJeu.coords(i)[0]+45*F:
-                y = -y 
-            elif ZoneJeu.coords(i)[1]-35*F <= ZoneJeu.coords(Balle)[1] <= ZoneJeu.coords(i)[1]+35*F:
-                x = -x          
-            else:
-                x=-x
-                y=-y
-            ZoneJeu.delete(i)
-            try :   
-                ListeBrique.remove(i)
-            except :
-                pass
-    else : 
-        TagBrique.Levelattribute -=1
-
+    if len(detruit) > 2 and detruit[2] not in ListeNon:
+        i = detruit[2]
+        try :
+            NiveauBrique = ZoneJeu.itemcget(i,'image')
+        except :
+            pass
+        if NiveauBrique == 'pyimage5':
+            if i > 4:
+                DetecterCollision(i)
+                ScoreNumber += 1
+                try :  
+                    ListeBrique.remove(i)
+                except :
+                    pass
+        elif NiveauBrique == 'pyimage4':
+            ZoneJeu.itemconfigure(i,image=ListeBriqueImage[1])
+            if i > 4:
+                if ZoneJeu.coords(i)[0]-45*F <= ZoneJeu.coords(Balle)[0] <= ZoneJeu.coords(i)[0]+45*F:
+                    y = -y 
+                elif ZoneJeu.coords(i)[1]-35*F <= ZoneJeu.coords(Balle)[1] <= ZoneJeu.coords(i)[1]+35*F:
+                    x = -x          
+                else:
+                    x=-x
+                    y=-y
+            ScoreNumber += 2
+        elif NiveauBrique == 'pyimage6':
+            ZoneJeu.itemconfigure(i,image=ListeBriqueImage[0])
+            if i > 4:
+                if ZoneJeu.coords(i)[0]-45*F <= ZoneJeu.coords(Balle)[0] <= ZoneJeu.coords(i)[0]+45*F:
+                    y = -y 
+                elif ZoneJeu.coords(i)[1]-35*F <= ZoneJeu.coords(Balle)[1] <= ZoneJeu.coords(i)[1]+35*F:
+                    x = -x          
+                else:
+                    x=-x
+                    y=-y
+            ScoreNumber += 3
+        précédent = detruit[2]
+        ZoneJeu.itemconfigure(Score, text=ScoreNumber)
     for j in detruit:
         if j == 2:
             if ZoneJeu.coords(Curseur)[0]-100*F <= ZoneJeu.coords(Balle)[0] <= ZoneJeu.coords(Curseur)[0]+100*F:
                 y = -y
+                if (ZoneJeu.coords(Curseur)[0]-100*F) <= ZoneJeu.coords(Balle)[0] <= (ZoneJeu.coords(Curseur)[0]-50*F):
+                    x = -abs(x) 
+                
+                elif (ZoneJeu.coords(Curseur)[0]+100*F) >= ZoneJeu.coords(Balle)[0] >= (ZoneJeu.coords(Curseur)[0]+50*F):
+                    x= abs(x)
+                
+                else :
+                    x = x
+                    
             if ZoneJeu.coords(Curseur)[1]-20*F <= ZoneJeu.coords(Balle)[1] <= ZoneJeu.coords(Curseur)[1]+20*F:
-                x = -x
-        
+                x = -x  
+                
         
 def MoveCurseur():
     if MoveCurseurDroit == True and ZoneJeu.coords(Curseur)[0]<=RésX-100*F:
@@ -127,38 +174,49 @@ def MoveCurseur():
 
 def Gagner():
     global Demarrer
+    global Points
+    global LabGagne
+    global Initialisation
     Demarrer = False
+    Initialisation = False
     LabGagne = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Gagné----- ", fill='white', font=Font(size=100))
-    ZoneJeu.pack()
+    ecr.update()
+    Points += 1
+    time.sleep(1)
+    ZoneJeu.delete(LabGagne,ScorePoint,ScoreVie)
 
 def Perdre():
     global Demarrer
     global LabPerdu
     global Initialisation
+    global Points
+    global ScoreNumber
     LabPerdu = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Perdu----- ", fill='white', font=Font(size=100))
-    ZoneJeu.delete(ScoreVie)
+    ZoneJeu.delete(ScoreVie,ScorePoint)
     for i in ListeBrique:
         ZoneJeu.delete(i)
     Initialisation = False
     ecr.update()
-    time.sleep(1)
+    time.sleep(2)
     ZoneJeu.delete(LabPerdu)
+    Points -= 1
+    ScoreNumber = 0
 
-class BriqueClass():
-    Levelattribute = 0
-
-def FonctionBriqueImage(Level, Nom):
-    global Nomstr
-    Nomstr = Nom[0]
-    print(Nomstr)
-    if Level == 1:
-        return(BriqueLevel1)
-    elif Level == 2:
-        return(BriqueLevel2)
-    elif Level == 3:
-        return(BriqueLevel3)
-    Nomstr = BriqueClass()
-    Nomstr.Levelattribute = Level
+def ChangerCouleurs():
+    global ScoreNumber
+    global ZoneJeu
+    global Score
+    if 550 >= ScoreNumber == 500 and ZoneJeu.itemcget(Score,'fill') != 'red':
+        ZoneJeu.itemconfigure(Score, fill='red')
+    elif 350 >= ScoreNumber == 300 and ZoneJeu.itemcget(Score,'fill') != 'orange':
+        ZoneJeu.itemconfigure(Score, fill='orange')
+    elif 250 >= ScoreNumber == 200 and ZoneJeu.itemcget(Score,'fill') != 'yellow':
+        ZoneJeu.itemconfigure(Score, fill='yellow')
+    elif 150 >= ScoreNumber >= 100 and ZoneJeu.itemcget(Score,'fill') != 'green':
+        ZoneJeu.itemconfigure(Score, fill='green')
+    elif ScoreNumber == 0 and ZoneJeu.itemcget(Score,'fill') != 'white':
+        ZoneJeu.itemconfigure(Score, fill='white')
+    
 
 #Démarrer
 global Demarrer
@@ -171,7 +229,7 @@ def FctDemarrer2(event):
 image2 = Image.open("Data/Balle4.png")
 image2 = image2.resize((round(35*F), round(35*F)), Image.ANTIALIAS) 
 ImgBalle = ImageTk.PhotoImage(image2)
-Balle = ZoneJeu.create_image(RésX//2,212*F,image=ImgBalle)
+Balle = ZoneJeu.create_image(RésX//2, 775*F,image=ImgBalle)
 
 #lier les touches
 ecr.bind("<KeyPress-Left>",FctCurseurPressG)
@@ -184,8 +242,6 @@ ecr.bind("<Escape>",FctBoutonQuitter)
 #Vitesse de la balle
 x=VitesseBalle
 y=VitesseBalle
-
-#Texte de score *4*
 
 #Taille de la brique
 Facube = (1.5)*F
@@ -203,14 +259,8 @@ imageBrique3 = Image.open("Data/Carré3.png")
 imageBrique3 = imageBrique3.resize((round(53*Facube), round(38*Facube)), Image.ANTIALIAS) 
 BriqueLevel3 = ImageTk.PhotoImage(imageBrique3)
     
-
 ListeBriqueImage = [BriqueLevel1,BriqueLevel2,BriqueLevel3]
-ListeBrique = []
 
-
-
-global CompteurMort
-CompteurMort = 0
 
 #placement curseur initial
 ZoneJeu.coords(Curseur, RésX//2, 800*F)
@@ -219,7 +269,7 @@ ZoneJeu.coords(Curseur, RésX//2, 800*F)
 sizeBalle = 17.5*F
 global Recommencer
 Recommencer = True
-LabHello = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Hello----- ", fill='white', font=Font(size=100))
+LabHello = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Bonjour----- ", fill='white', font=Font(size=100))
 ZoneJeu.pack()
 ecr.update()
 time.sleep(1)
@@ -229,24 +279,33 @@ ZoneJeu.delete(LabHello)
 while Quitter == False:
     if Initialisation == False:
 
-        Vie = 2
+        Vie = 10
+        ScorePoint = ZoneJeu.create_text(1650*F,50*F,text="Nombre de Victoires : {}".format(Points), font=Font(size=TaillePolice), fill="white")
         ScoreVie = ZoneJeu.create_text(200*F, 50*F, text="Nombre de vies : {}".format(Vie), font=Font(size=TaillePolice), fill="white")
+        ZoneJeu.itemconfigure(Score, text=ScoreNumber) 
         block = 90
         #Affichage des briques
         for j in range(6):    
             for i in range(15):
-                Coucou = globals()['BriqueNumero'+str(j+1)+str(i+1)] = ZoneJeu.create_image(300*F+100*F*i,150*F+75*F*j,image=FonctionBriqueImage(random.randint(1,3), ['BriqueNumero'+str(i+1)]))
+                NbrAlea = random.randint(0,2)
+                Coucou = ZoneJeu.create_image(300*F+100*F*i,150*F+75*F*j,image=ListeBriqueImage[NbrAlea])
                 ListeBrique.append(Coucou)
 
-        for i in range(30):
+        #Destruction de certaines briques
+        for i in range(40):
             NbrItem = ZoneJeu.find_all()[len(ZoneJeu.find_all())-1]
             Nbr_a_detruire = random.randint(NbrItem-block,NbrItem)
-            ListeNon = [ScoreVie,Curseur,Balle,FondEcrand]
+            ListeNon = [ScoreVie,Curseur,Balle,FondEcrand,ScorePoint,Score]
             if Nbr_a_detruire not in ListeNon:
                 ZoneJeu.delete(Nbr_a_detruire)
             block-=1
             ZoneJeu.pack()
+            try :
+                ListeBrique.remove(Nbr_a_detruire)
+            except:
+                pass
         Initialisation = True
+        
 
     #boucle en attente
     while Initialisation == True and Demarrer == False and Quitter == False:
@@ -258,7 +317,8 @@ while Quitter == False:
         MoveCurseur()
         #Boucle lancé        
         while Initialisation == True and Demarrer == True and Quitter == False:
-
+            ListeNon = [ScoreVie,Curseur,Balle,FondEcrand,ScorePoint,Score]
+            ChangerCouleurs()
             time.sleep(0.017)
             detruit = ZoneJeu.find_overlapping(ZoneJeu.coords(Balle)[0]-sizeBalle*F,ZoneJeu.coords(Balle)[1]-sizeBalle*F,ZoneJeu.coords(Balle)[0]+sizeBalle*F,ZoneJeu.coords(Balle)[1]+sizeBalle*F)
             MoveCurseur()
@@ -287,8 +347,8 @@ while Quitter == False:
     #effacer tout
 for i in ListeBrique:
     ZoneJeu.delete(i)
-ZoneJeu.delete(LabPerdu)
-LabGoodbye = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Good Bye----- ", fill='white', font=Font(size=100))
+ZoneJeu.delete(LabPerdu,LabGagne)
+LabGoodbye = ZoneJeu.create_text(RésX//2, RésY//2, text="-----Aurevoir----- ", fill='white', font=Font(size=100))
 ZoneJeu.delete(ScoreVie)
 ecr.update()
 time.sleep(0.5)
